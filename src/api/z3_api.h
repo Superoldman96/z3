@@ -8,10 +8,8 @@ DEFINE_TYPE(Z3_symbol);
 DEFINE_TYPE(Z3_config);
 DEFINE_TYPE(Z3_context);
 DEFINE_TYPE(Z3_sort);
-#define Z3_sort_opt Z3_sort
 DEFINE_TYPE(Z3_func_decl);
 DEFINE_TYPE(Z3_ast);
-#define Z3_ast_opt Z3_ast
 DEFINE_TYPE(Z3_app);
 DEFINE_TYPE(Z3_pattern);
 DEFINE_TYPE(Z3_model);
@@ -31,7 +29,6 @@ DEFINE_TYPE(Z3_ast_vector);
 DEFINE_TYPE(Z3_ast_map);
 DEFINE_TYPE(Z3_apply_result);
 DEFINE_TYPE(Z3_func_interp);
-#define Z3_func_interp_opt Z3_func_interp
 DEFINE_TYPE(Z3_func_entry);
 DEFINE_TYPE(Z3_fixedpoint);
 DEFINE_TYPE(Z3_optimize);
@@ -2083,7 +2080,7 @@ extern "C" {
                                             Z3_symbol recognizer,
                                             unsigned num_fields,
                                             Z3_symbol const field_names[],
-                                            Z3_sort_opt const sorts[],
+                                            Z3_sort const sorts[],
                                             unsigned sort_refs[]
                                             );
 
@@ -4501,6 +4498,17 @@ extern "C" {
     bool Z3_API Z3_get_finite_domain_sort_size(Z3_context c, Z3_sort s, uint64_t* r);
 
     /**
+        \brief Return the arity (number of dimensions) of the given array sort.
+
+        \pre Z3_get_sort_kind(s) == Z3_ARRAY_SORT
+
+        \sa Z3_get_array_sort_domain_n
+
+        def_API('Z3_get_array_arity', UINT, (_in(CONTEXT), _in(SORT)))
+    */
+    unsigned Z3_API Z3_get_array_arity(Z3_context c, Z3_sort s);
+
+    /**
        \brief Return the domain of the given array sort.
        In the case of a multi-dimensional array, this function returns the sort of the first dimension.
 
@@ -5101,6 +5109,8 @@ extern "C" {
 
        Return \c true if the numeral value fits in 64 bit numerals, \c false otherwise.
 
+       Equivalent to \c Z3_get_numeral_rational_int64 except that for unsupported expression arguments \c Z3_get_numeral_small signals an error while \c Z3_get_numeral_rational_int64 returns \c false.
+
        \pre Z3_get_ast_kind(a) == Z3_NUMERAL_AST
 
        def_API('Z3_get_numeral_small', BOOL, (_in(CONTEXT), _in(AST), _out(INT64), _out(INT64)))
@@ -5511,7 +5521,7 @@ extern "C" {
 
        def_API('Z3_model_get_const_interp', AST, (_in(CONTEXT), _in(MODEL), _in(FUNC_DECL)))
     */
-    Z3_ast_opt Z3_API Z3_model_get_const_interp(Z3_context c, Z3_model m, Z3_func_decl a);
+    Z3_ast Z3_API Z3_model_get_const_interp(Z3_context c, Z3_model m, Z3_func_decl a);
 
     /**
        \brief Test if there exists an interpretation (i.e., assignment) for \c a in the model \c m.
@@ -5532,7 +5542,7 @@ extern "C" {
 
        def_API('Z3_model_get_func_interp', FUNC_INTERP, (_in(CONTEXT), _in(MODEL), _in(FUNC_DECL)))
     */
-    Z3_func_interp_opt Z3_API Z3_model_get_func_interp(Z3_context c, Z3_model m, Z3_func_decl f);
+    Z3_func_interp Z3_API Z3_model_get_func_interp(Z3_context c, Z3_model m, Z3_func_decl f);
 
     /**
        \brief Return the number of constants assigned by the given model.
@@ -6033,7 +6043,6 @@ extern "C" {
 
     /** @name Error Handling */
     /**@{*/
-#ifndef SAFE_ERRORS
     /**
        \brief Return the error code for the last API call.
 
@@ -6059,7 +6068,6 @@ extern "C" {
        \sa Z3_get_error_code
     */
     void Z3_API Z3_set_error_handler(Z3_context c, Z3_error_handler h);
-#endif
 
     /**
        \brief Set an error.

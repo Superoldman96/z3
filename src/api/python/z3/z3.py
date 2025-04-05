@@ -56,6 +56,14 @@ import copy
 if sys.version_info.major >= 3:
     from typing import Iterable
 
+from collections.abc import Callable
+from typing import (
+    Any,
+    Iterable,
+    Sequence
+)
+
+
 Z3_DEBUG = __debug__
 
 
@@ -121,7 +129,7 @@ def append_log(s):
     Z3_append_log(s)
 
 
-def to_symbol(s, ctx=None):
+def to_symbol(s, ctx = None):
     """Convert an integer or string into a Z3 symbol."""
     if _is_int(s):
         return Z3_mk_int_symbol(_get_ctx(ctx).ref(), s)
@@ -236,7 +244,7 @@ class Context:
 _main_ctx = None
 
 
-def main_ctx():
+def main_ctx() -> Context:
     """Return a reference to the global Z3 context.
 
     >>> x = Real('x')
@@ -257,14 +265,14 @@ def main_ctx():
     return _main_ctx
 
 
-def _get_ctx(ctx):
+def _get_ctx(ctx : Context | None) -> Context:
     if ctx is None:
         return main_ctx()
     else:
         return ctx
 
 
-def get_ctx(ctx):
+def get_ctx(ctx : Context | None) -> Context:
     return _get_ctx(ctx)
 
 
@@ -292,7 +300,7 @@ def set_param(*args, **kws):
             prev = None
 
 
-def reset_params():
+def reset_params() -> None:
     """Reset all global (or module) parameters.
     """
     Z3_global_param_reset_all()
@@ -452,7 +460,7 @@ class AstRef(Z3PPObject):
         return None
 
 
-def is_ast(a):
+def is_ast(a : Any) -> bool:
     """Return `True` if `a` is an AST node.
 
     >>> is_ast(10)
@@ -473,7 +481,7 @@ def is_ast(a):
     return isinstance(a, AstRef)
 
 
-def eq(a, b):
+def eq(a : AstRef, b : AstRef) -> bool:
     """Return `True` if `a` and `b` are structurally identical AST nodes.
 
     >>> x = Int('x')
@@ -492,7 +500,7 @@ def eq(a, b):
     return a.eq(b)
 
 
-def _ast_kind(ctx, a):
+def _ast_kind(ctx : Context, a : Any) -> int:
     if is_ast(a):
         a = a.as_ast()
     return Z3_get_ast_kind(ctx.ref(), a)
@@ -648,7 +656,7 @@ class SortRef(AstRef):
         return AstRef.__hash__(self)
 
 
-def is_sort(s):
+def is_sort(s : Any) -> bool:
     """Return `True` if `s` is a Z3 sort.
 
     >>> is_sort(IntSort())
@@ -692,11 +700,11 @@ def _to_sort_ref(s, ctx):
     return SortRef(s, ctx)
 
 
-def _sort(ctx, a):
+def _sort(ctx : Context, a : Any) -> SortRef:
     return _to_sort_ref(Z3_get_sort(ctx.ref(), a), ctx)
 
 
-def DeclareSort(name, ctx=None):
+def DeclareSort(name, ctx : Context | None = None) -> SortRef:
     """Create a new uninterpreted sort named `name`.
 
     If `ctx=None`, then the new sort is declared in the global Z3Py context.
@@ -1500,7 +1508,7 @@ def FreshConst(sort, prefix="c"):
     return _to_expr_ref(Z3_mk_fresh_const(ctx.ref(), prefix, sort.ast), ctx)
 
 
-def Var(idx, s):
+def Var(idx : int, s : SortRef) -> ExprRef:
     """Create a Z3 free variable. Free variables are used to create quantified formulas.
     A free variable with index n is bound when it occurs within the scope of n+1 quantified
     declarations.
@@ -1515,7 +1523,7 @@ def Var(idx, s):
     return _to_expr_ref(Z3_mk_bound(s.ctx_ref(), idx, s.ast), s.ctx)
 
 
-def RealVar(idx, ctx=None):
+def RealVar(idx: int, ctx: Context | None = None) -> ExprRef:
     """
     Create a real free variable. Free variables are used to create quantified formulas.
     They are also used to create polynomials.
@@ -1525,8 +1533,7 @@ def RealVar(idx, ctx=None):
     """
     return Var(idx, RealSort(ctx))
 
-
-def RealVarVector(n, ctx=None):
+def RealVarVector(n: int, ctx: Context | None = None) -> list[ExprRef]:
     """
     Create a list of Real free variables.
     The variables have ids: 0, 1, ..., n-1
@@ -1630,7 +1637,7 @@ class BoolRef(ExprRef):
     
 
     
-def is_bool(a):
+def is_bool(a : Any) -> bool:
     """Return `True` if `a` is a Z3 Boolean expression.
 
     >>> p = Bool('p')
@@ -1648,7 +1655,7 @@ def is_bool(a):
     return isinstance(a, BoolRef)
 
 
-def is_true(a):
+def is_true(a : Any) -> bool:
     """Return `True` if `a` is the Z3 true expression.
 
     >>> p = Bool('p')
@@ -1666,7 +1673,7 @@ def is_true(a):
     return is_app_of(a, Z3_OP_TRUE)
 
 
-def is_false(a):
+def is_false(a : Any) -> bool:
     """Return `True` if `a` is the Z3 false expression.
 
     >>> p = Bool('p')
@@ -1680,7 +1687,7 @@ def is_false(a):
     return is_app_of(a, Z3_OP_FALSE)
 
 
-def is_and(a):
+def is_and(a : Any) -> bool:
     """Return `True` if `a` is a Z3 and expression.
 
     >>> p, q = Bools('p q')
@@ -1692,7 +1699,7 @@ def is_and(a):
     return is_app_of(a, Z3_OP_AND)
 
 
-def is_or(a):
+def is_or(a : Any) -> bool:
     """Return `True` if `a` is a Z3 or expression.
 
     >>> p, q = Bools('p q')
@@ -1704,7 +1711,7 @@ def is_or(a):
     return is_app_of(a, Z3_OP_OR)
 
 
-def is_implies(a):
+def is_implies(a : Any) -> bool:
     """Return `True` if `a` is a Z3 implication expression.
 
     >>> p, q = Bools('p q')
@@ -1716,7 +1723,7 @@ def is_implies(a):
     return is_app_of(a, Z3_OP_IMPLIES)
 
 
-def is_not(a):
+def is_not(a : Any) -> bool:
     """Return `True` if `a` is a Z3 not expression.
 
     >>> p = Bool('p')
@@ -1728,7 +1735,7 @@ def is_not(a):
     return is_app_of(a, Z3_OP_NOT)
 
 
-def is_eq(a):
+def is_eq(a : Any) -> bool:
     """Return `True` if `a` is a Z3 equality expression.
 
     >>> x, y = Ints('x y')
@@ -1738,7 +1745,7 @@ def is_eq(a):
     return is_app_of(a, Z3_OP_EQ)
 
 
-def is_distinct(a):
+def is_distinct(a : Any) -> bool:
     """Return `True` if `a` is a Z3 distinct expression.
 
     >>> x, y, z = Ints('x y z')
@@ -2433,7 +2440,7 @@ class ArithSortRef(SortRef):
                 _z3_assert(False, msg % self)
 
 
-def is_arith_sort(s):
+def is_arith_sort(s : Any) -> bool:
     """Return `True` if s is an arithmetical sort (type).
 
     >>> is_arith_sort(IntSort())
@@ -2755,7 +2762,7 @@ def is_arith(a):
     return isinstance(a, ArithRef)
 
 
-def is_int(a):
+def is_int(a) -> bool:
     """Return `True` if `a` is an integer expression.
 
     >>> x = Int('x')
@@ -2861,7 +2868,7 @@ def is_algebraic_value(a):
     return is_arith(a) and a.is_real() and _is_algebraic(a.ctx, a.as_ast())
 
 
-def is_add(a):
+def is_add(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b + c.
 
     >>> x, y = Ints('x y')
@@ -2873,7 +2880,7 @@ def is_add(a):
     return is_app_of(a, Z3_OP_ADD)
 
 
-def is_mul(a):
+def is_mul(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b * c.
 
     >>> x, y = Ints('x y')
@@ -2885,7 +2892,7 @@ def is_mul(a):
     return is_app_of(a, Z3_OP_MUL)
 
 
-def is_sub(a):
+def is_sub(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b - c.
 
     >>> x, y = Ints('x y')
@@ -2897,7 +2904,7 @@ def is_sub(a):
     return is_app_of(a, Z3_OP_SUB)
 
 
-def is_div(a):
+def is_div(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b / c.
 
     >>> x, y = Reals('x y')
@@ -2914,7 +2921,7 @@ def is_div(a):
     return is_app_of(a, Z3_OP_DIV)
 
 
-def is_idiv(a):
+def is_idiv(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b div c.
 
     >>> x, y = Ints('x y')
@@ -2926,7 +2933,7 @@ def is_idiv(a):
     return is_app_of(a, Z3_OP_IDIV)
 
 
-def is_mod(a):
+def is_mod(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b % c.
 
     >>> x, y = Ints('x y')
@@ -2938,7 +2945,7 @@ def is_mod(a):
     return is_app_of(a, Z3_OP_MOD)
 
 
-def is_le(a):
+def is_le(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b <= c.
 
     >>> x, y = Ints('x y')
@@ -2950,7 +2957,7 @@ def is_le(a):
     return is_app_of(a, Z3_OP_LE)
 
 
-def is_lt(a):
+def is_lt(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b < c.
 
     >>> x, y = Ints('x y')
@@ -2962,7 +2969,7 @@ def is_lt(a):
     return is_app_of(a, Z3_OP_LT)
 
 
-def is_ge(a):
+def is_ge(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b >= c.
 
     >>> x, y = Ints('x y')
@@ -2974,7 +2981,7 @@ def is_ge(a):
     return is_app_of(a, Z3_OP_GE)
 
 
-def is_gt(a):
+def is_gt(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form b > c.
 
     >>> x, y = Ints('x y')
@@ -2986,7 +2993,7 @@ def is_gt(a):
     return is_app_of(a, Z3_OP_GT)
 
 
-def is_is_int(a):
+def is_is_int(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form IsInt(b).
 
     >>> x = Real('x')
@@ -2998,7 +3005,7 @@ def is_is_int(a):
     return is_app_of(a, Z3_OP_IS_INT)
 
 
-def is_to_real(a):
+def is_to_real(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form ToReal(b).
 
     >>> x = Int('x')
@@ -3013,7 +3020,7 @@ def is_to_real(a):
     return is_app_of(a, Z3_OP_TO_REAL)
 
 
-def is_to_int(a):
+def is_to_int(a : Any) -> bool:
     """Return `True` if `a` is an expression of the form ToInt(b).
 
     >>> x = Real('x')
@@ -4689,7 +4696,7 @@ def is_array_sort(a):
     return Z3_get_sort_kind(a.ctx.ref(), Z3_get_sort(a.ctx.ref(), a.ast)) == Z3_ARRAY_SORT
 
 
-def is_array(a):
+def is_array(a : Any) -> bool:
     """Return `True` if `a` is a Z3 array expression.
 
     >>> a = Array('a', IntSort(), IntSort())
@@ -11140,7 +11147,7 @@ def is_seq(a):
     return isinstance(a, SeqRef)
 
 
-def is_string(a):
+def is_string(a: Any) -> bool:
     """Return `True` if `a` is a Z3 string expression.
     >>> print (is_string(StringVal("ab")))
     True
@@ -11148,7 +11155,7 @@ def is_string(a):
     return isinstance(a, SeqRef) and a.is_string()
 
 
-def is_string_value(a):
+def is_string_value(a: Any) -> bool:
     """return 'True' if 'a' is a Z3 string constant expression.
     >>> print (is_string_value(StringVal("a")))
     True
@@ -11341,7 +11348,7 @@ def SeqMap(f, s):
 
 def SeqMapI(f, i, s):
     """Map function 'f' over sequence 's' at index 'i'"""
-    ctx = _get_ctx(f, s)
+    ctx = _get_ctx2(f, s)
     s = _coerce_seq(s, ctx)
     if not is_expr(i):
         i = _py2expr(i)
