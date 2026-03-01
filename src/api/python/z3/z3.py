@@ -8463,8 +8463,11 @@ class Optimize(Z3PPObject):
         self._on_models_id = None
         Z3_optimize_inc_ref(self.ctx.ref(), self.optimize)
 
+    def __copy__(self):
+        return self.translate(self.ctx)
+
     def __deepcopy__(self, memo={}):
-        return Optimize(self.optimize, self.ctx)
+        return self.translate(self.ctx)
 
     def __del__(self):
         if self.optimize is not None and self.ctx.ref() is not None and Z3_optimize_dec_ref is not None:
@@ -8671,6 +8674,19 @@ class Optimize(Z3PPObject):
         """Return statistics for the last check`.
         """
         return Statistics(Z3_optimize_get_statistics(self.ctx.ref(), self.optimize), self.ctx)
+
+    def translate(self, target):
+        """Translate `self` to the context `target`. That is, return a copy of `self` in the context `target`.
+
+        >>> c1 = Context()
+        >>> c2 = Context()
+        >>> o1 = Optimize(ctx=c1)
+        >>> o2 = o1.translate(c2)
+        """
+        if z3_debug():
+            _z3_assert(isinstance(target, Context), "argument must be a Z3 context")
+        opt = Z3_optimize_translate(self.ctx.ref(), self.optimize, target.ref())
+        return Optimize(opt, target)
 
     def set_on_model(self, on_model):
         """Register a callback that is invoked with every incremental improvement to
