@@ -5,7 +5,7 @@ on:
   schedule: weekly
   workflow_dispatch:
 
-timeout-minutes: 90
+timeout-minutes: 180
 
 permissions: read-all
 
