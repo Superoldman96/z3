@@ -117,9 +117,9 @@ namespace opt {
         class def_ref {
             def* m_def = nullptr;
         public:
-            def_ref(def* d) {
-                if (d) d->inc_ref();
-                m_def = d;
+            def_ref() = default;
+            def_ref(def* d) : m_def(d) {
+                if (m_def) m_def->inc_ref();
             }
             def_ref(def_ref const& other) : m_def(other.m_def) {
                 if (m_def) m_def->inc_ref();
@@ -155,9 +155,9 @@ namespace opt {
             def& operator*() { return *m_def; }
             def* operator->() { return m_def; }
             def const& operator*() const { return *m_def; }
-            operator bool() const { return !!m_def; }
+            operator bool() const { return m_def != nullptr; }
 
-            ~def_ref() { if (m_def) m_def->dec_ref(); };
+            ~def_ref() { if (m_def) m_def->dec_ref(); }
         };
         struct add_def : public def {
             def* x, *y;
