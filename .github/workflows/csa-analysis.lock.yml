@@ -652,7 +652,7 @@ jobs:
       - name: Execute GitHub Copilot CLI
         id: agentic_execution
         # Copilot CLI tool arguments (sorted):
-        timeout-minutes: 90
+        timeout-minutes: 180
         run: |
           set -o pipefail
           # shellcheck disable=SC1003
